@@ -53,14 +53,49 @@ app.get('/login/:m_id',async(req,res)=>{
 })
 
 // ------------- admin -------------
-// ------------- admin -------------
+// ------------- admin product -------------
 app.get('/admin/product',async(req,res)=>{
 	conn.query(`SELECT * FROM product`,
 	(error,result,fields)=>{
 		res.send(result)
 	})
 })
+app.post('/admin/product/add',async(req,res)=>{
+	const {p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg}=req.body
+	conn.query(`INSERT INTO product (p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		[p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg]
+		,(error,result,fields)=>{
+		}
+	)
+})
+app.patch('/admin/product/update',async(req,res)=>{
+	const {p_no,p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg}=req.body
+	conn.query(`
+	UPDATE product
+	SET p_name='${p_name}',p_price='${p_price}',p_saleprice='${p_saleprice}',p_color='${p_color}',
+	p_size='${p_size}',p_amount='${p_amount}',p_category='${p_category}'
+	,p_isbest='${p_isbest}',p_isnew='${p_isnew}',p_mainImg='${p_mainImg}',p_price='${p_price}',
+	p_mainMiniImg1='${p_mainMiniImg1}',p_mainMiniImg2='${p_mainMiniImg2}',p_mainMiniImg3='${p_mainMiniImg3}',
+	p_mainMiniImg4='${p_mainMiniImg4}',p_mainMiniImg5='${p_mainMiniImg5}',p_annImg='${p_annImg}'
+	WHERE p_no='${p_no}'
+	`,(error,result,fields)=>{
+	})
+})
 
+app.patch('/admin/product/update/is',async(req,res)=>{
+	const {p_no,p_isbest,p_isnew}=req.body
+	conn.query(`
+	UPDATE product
+	SET p_isbest='${p_isbest}',p_isnew='${p_isnew}'
+	WHERE p_no='${p_no}'
+	`,(error,result,fields)=>{
+	})
+})
+app.delete('/admin/product/update/:id',async(req,res)=>{
+	const {id}= req.params
+	conn.query(`DELETE FROM product WHERE p_no='${id}'`,(error,result,fields)=>{
+	})
+})
 
 app.listen(port,()=>{
 	console.log('서버 작동중');
