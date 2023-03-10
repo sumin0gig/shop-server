@@ -97,6 +97,24 @@ app.delete('/admin/product/update/:id',async(req,res)=>{
 	})
 })
 
+app.get('/admin/product/some/:isSearch',async(req,res)=>{
+	const { params } = req;
+	const data = JSON.parse(params.isSearch)
+	console.log(data);
+	conn.query(`SELECT * FROM product
+	WHERE
+	p_name like '%${data.p_name}%' AND
+	p_price >= '${data.p_pricemin}' AND p_price <= '${data.p_pricemax}' AND
+	p_saleprice >= '${data.p_salepricemin}' AND p_price <= '${data.p_salepricemax}' AND
+	p_amount >= '${data.p_amountmin}' AND p_amount <= '${data.p_amountmax}' AND
+	p_category like '%${data.p_category}%' AND
+	p_isbest like '%${data.p_isbest}'AND
+	p_isnew like '%${data.p_isnew}'
+	`,
+	(error,result,fields)=>{
+		res.send(result)
+	})
+})
 app.listen(port,()=>{
 	console.log('서버 작동중');
 })
