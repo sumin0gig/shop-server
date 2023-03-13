@@ -52,6 +52,37 @@ app.get('/login/:m_id',async(req,res)=>{
 	})
 })
 
+// ------------- product -------------
+app.get('/product/some/:cate',async(req,res)=>{
+	const {cate}= req.params;
+	conn.query(`SELECT * FROM product WHERE p_category = '${cate}'`,
+	(error,result,fields)=>{
+		res.send(result)
+	}
+	)
+})
+app.get('/product/Is/:state',async(req,res)=>{
+	const {state}= req.params;
+	conn.query(`SELECT * FROM product WHERE ${state} = 'Y'`,
+	(error,result,fields)=>{
+		res.send(result)
+	})
+})
+app.get('/product/IsBest',async(req,res)=>{
+	conn.query(`SELECT * FROM product WHERE p_isbest = 'Y' order by p_isbestNo asc limit 10`,
+	(error,result,fields)=>{
+		res.send(result)
+	})
+})
+
+app.get('/product/view/:no',async(req,res)=>{
+	const {no}=req.params;
+	conn.query(`SELECT * FROM product WHERE p_no = ${no}`,
+	(error,result,fields)=>{
+		res.send(result)
+	})
+})
+
 // ------------- admin -------------
 // ------------- admin product -------------
 app.get('/admin/product',async(req,res)=>{
@@ -61,9 +92,9 @@ app.get('/admin/product',async(req,res)=>{
 	})
 })
 app.post('/admin/product/add',async(req,res)=>{
-	const {p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg}=req.body
-	conn.query(`INSERT INTO product (p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		[p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_mainMiniImg5,p_annImg]
+	const {p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_annImg}=req.body
+	conn.query(`INSERT INTO product (p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_annImg) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		[p_name,p_price,p_saleprice,p_color,p_size,p_amount,p_category,p_isbest,p_isnew,p_mainImg,p_mainMiniImg1,p_mainMiniImg2,p_mainMiniImg3,p_mainMiniImg4,p_annImg]
 		,(error,result,fields)=>{
 		}
 	)
@@ -91,6 +122,16 @@ app.patch('/admin/product/update/is',async(req,res)=>{
 	`,(error,result,fields)=>{
 	})
 })
+app.patch('/admin/product/update/best',async(req,res)=>{
+	const {p_no,p_isbestNo}=req.body
+	conn.query(`
+	UPDATE product
+	SET p_isbestNo='${p_isbestNo}'
+	WHERE p_no='${p_no}'
+	`,(error,result,fields)=>{
+	})
+})
+
 app.delete('/admin/product/update/:id',async(req,res)=>{
 	const {id}= req.params
 	conn.query(`DELETE FROM product WHERE p_no='${id}'`,(error,result,fields)=>{
@@ -115,6 +156,8 @@ app.get('/admin/product/some/:isSearch',async(req,res)=>{
 		res.send(result)
 	})
 })
+
+
 app.listen(port,()=>{
 	console.log('서버 작동중');
 })
