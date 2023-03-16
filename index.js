@@ -2,6 +2,7 @@
 const express= require("express");
 const cors= require("cors");
 const mysql= require('mysql');
+const bcrypt = require('bcrypt');
 
 // server 생성
 const app= express();
@@ -11,6 +12,20 @@ const port= 8088;
 app.use(express.json());
 // cors 이슈 방지
 app.use(cors());
+// 이미지 등록
+const multer= require("multer");
+app.use("/upload",express.static("upload")); 
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+			cb(null, 'upload/banner');
+	},
+	filename: (req,file,cb)=>{
+			const newFilename = file.originalname;
+			cb(null, newFilename);
+	}
+}) 
+const upload= multer({storage:storage});
+
 
 const conn = mysql.createConnection({
 	host: "database-1.cvmqc6bfrssc.ap-northeast-1.rds.amazonaws.com",
@@ -24,8 +39,9 @@ conn.connect();
 // ------------- join -------------
 app.post('/join', async (req,res)=>{
 	const {name,id,pw,tel_1,tel_2,tel_3,birth,sms_check,mail_add1,mail_add2,mail_check}=req.body;
+	const password=bcrypt.hashSync(pw,12);
 	conn.query(`INSERT INTO member (m_name,m_id,m_pw,m_tel_1,m_tel_2,m_tel_3,m_birth,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check)
-	VALUES ('${name}','${id}','${pw}','${tel_1}','${tel_2}','${tel_3}','${birth}','${sms_check}','${mail_add1}','${mail_add2}','${mail_check}')`)
+	VALUES ('${name}','${id}','${password}','${tel_1}','${tel_2}','${tel_3}','${birth}','${sms_check}','${mail_add1}','${mail_add2}','${mail_check}')`)
 })
 app.get('/join/id',async(req,res)=>{
 	conn.query(`SELECT m_id FROM member`,
@@ -40,12 +56,33 @@ app.get('/join/tel',async(req,res)=>{
 	})
 })
 // ------------- login -------------
-app.get('/login/:m_id',async(req,res)=>{
-	const {m_id}=req.params
-	conn.query(`SELECT m_id,m_pw FROM member WHERE m_id='${m_id}'`,
+app.get('/login/:loginData',async(req,res)=>{
+	const {m_id,m_pw}=JSON.parse(req.params.loginData)
+	conn.query(`SELECT m_id,m_pw,m_authority FROM member WHERE m_id='${m_id}'`,
+	(error,result,fields)=>{
+		const match = bcrypt.compareSync(m_pw,result[0].m_pw);
+		res.send([{m_id:result[0].m_id,m_pw:match,m_authority:result[0].m_authority}])
+	})
+})
+
+app.get('/search/id/:formdata',async(req,res)=>{
+	const data = JSON.parse(req.params.formdata)
+	conn.query(`SELECT * FROM member WHERE m_name='${data.m_name}' AND m_tel_1='${data.m_tel_1}' AND m_tel_2='${data.m_tel_2}' AND m_tel_3='${data.m_tel_3}' `,
 	(error,result,fields)=>{
 		res.send(result)
 	})
+})
+app.get('/search/pw/:formdata',async(req,res)=>{
+	const data = JSON.parse(req.params.formdata)
+	conn.query(`SELECT * FROM member WHERE m_id='${data.m_id}' AND m_tel_1='${data.m_tel_1}' AND m_tel_2='${data.m_tel_2}' AND m_tel_3='${data.m_tel_3}' `,
+	(error,result,fields)=>{
+		res.send(result)
+	})
+})
+app.patch('/search/pw',async(req,res)=>{
+	const {m_no,m_pw}=req.body;
+	const password=bcrypt.hashSync(m_pw,12);
+	conn.query(`UPDATE member SET m_pw='${password}' WHERE m_no='${m_no}' `)
 })
 
 // ------------- product -------------
@@ -159,6 +196,13 @@ app.get('/admin/product/view/amount',async(req,res)=>{
 		res.send(result)
 	})
 })
+app.post('/admin/product/amount',async(req,res)=>{
+	const {p_no,pa_color,pa_size,pa_amount}=req.body;
+	conn.query(`
+	INSERT INTO product_amount (p_no,pa_color,pa_size,pa_amount)
+	VALUES (?,?,?,?)`,[p_no,pa_color||"ONE COLOR",pa_size||"ONE SIZE",pa_amount]
+	)
+})
 app.patch('/admin/product/amount/:no',async(req,res)=>{
 	const {no}=req.params
 	const {pa_amount,plus_amount}=req.body
@@ -173,7 +217,42 @@ app.delete('/admin/product/amount/:no',async(req,res)=>{
 	DELETE FROM product_amount
 	WHERE pa_no='${no}'`)
 })
+app.get('/admin/member',async(req,res)=>{
+	conn.query(`SELECT m_no,m_name,m_id,m_tel_1,m_tel_2,m_tel_3,m_birth,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check,m_authority FROM member order by m_authority desc`
+	,(error,result)=>{
+		res.send(result);
+	})
+})
+app.patch('/admin/member',async(req,res)=>{
+	const {m_no,m_authority}=req.body;
+	conn.query(`UPDATE member
+	SET m_authority=${m_authority}
+	WHERE m_no='${m_no}'`)
+})
 
+app.get('/admin/banner',async(req,res)=>{
+	conn.query(`SELECT * FROM banner`
+	,(error,result,fields)=>{
+		res.send(result);
+	})
+})
+app.post('/admin/banner',async(req,res)=>{
+	const {b_img,b_name,b_link}=req.body;
+	conn.query(`INSERT INTO banner (b_img,b_name,b_link) VALUES ('${b_img}','${b_name}','${b_link}')`)
+})
+app.patch('/admin/banner',async(req,res)=>{
+	const {b_no,b_img,b_name,b_link}=req.body;
+	conn.query(`UPDATE banner
+	SET	b_img='${b_img}', b_name='${b_name}', b_link='${b_link}'
+	WHERE b_no='${b_no}'`)
+})
+app.delete('/admin/banner/:no',async(req,res)=>{
+	const {no}=req.params;
+	conn.query(`DELETE FROM banner WHERE b_no=${no}`)
+})
+app.post("/upload",upload.single('file'),(req,res)=>{
+	res.send({imageUrl: req.file.filename})
+})
 
 app.listen(port,()=>{
 	console.log('서버 작동중');
