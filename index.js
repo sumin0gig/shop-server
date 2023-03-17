@@ -58,10 +58,15 @@ app.get('/join/tel',async(req,res)=>{
 // ------------- login -------------
 app.get('/login/:loginData',async(req,res)=>{
 	const {m_id,m_pw}=JSON.parse(req.params.loginData)
-	conn.query(`SELECT m_id,m_pw,m_authority FROM member WHERE m_id='${m_id}'`,
+	conn.query(`SELECT m_id,m_no,m_pw,m_authority FROM member WHERE m_id='${m_id}'`,
 	(error,result,fields)=>{
 		const match = bcrypt.compareSync(m_pw,result[0].m_pw);
-		res.send([{m_id:result[0].m_id,m_pw:match,m_authority:result[0].m_authority}])
+		res.send([{
+			m_id:result[0].m_id,
+			m_no:result[0].m_no,
+			m_pw:match,
+			m_authority:result[0].m_authority
+		}])
 	})
 })
 
@@ -123,7 +128,18 @@ app.get('/product/view/amount/:no',async(req,res)=>{
 	})
 })
 
-
+// ------------- cart -------------
+app.get('/cart',async(req,res)=>{
+	conn.query(`SELECT * FROM cart`,
+	(error,result,fields)=>{
+		res.send(result);
+	})
+})
+app.post('/cart/add',async(req,res)=>{
+	const {m_no,p_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size}=req.body;
+	conn.query(`INSERT INTO cart (m_no,p_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size) VALUES(?,?,?,?,?,?,?,?,?)`
+	,[m_no,p_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size])
+})
 
 // ------------- admin -------------
 // ------------- admin product -------------
