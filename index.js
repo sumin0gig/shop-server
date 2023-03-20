@@ -58,11 +58,12 @@ app.get('/join/tel',async(req,res)=>{
 // ------------- login -------------
 app.get('/login/:loginData',async(req,res)=>{
 	const {m_id,m_pw}=JSON.parse(req.params.loginData)
-	conn.query(`SELECT m_id,m_no,m_pw,m_authority FROM member WHERE m_id='${m_id}'`,
+	conn.query(`SELECT m_id,m_name,m_no,m_pw,m_authority FROM member WHERE m_id='${m_id}'`,
 	(error,result,fields)=>{
 		const match = bcrypt.compareSync(m_pw,result[0].m_pw);
 		res.send([{
 			m_id:result[0].m_id,
+			m_name:result[0].m_name,
 			m_no:result[0].m_no,
 			m_pw:match,
 			m_authority:result[0].m_authority
@@ -128,6 +129,15 @@ app.get('/product/view/amount/:no',async(req,res)=>{
 	})
 })
 
+app.patch('/product/amount',async(req,res)=>{
+	req.body.forEach(i => {
+		conn.query(`
+	UPDATE product_amount
+	SET pa_amount= pa_amount-${i.c_amount}
+	WHERE pa_no= ${i.pa_no}
+	`)})
+})
+
 // ------------- cart -------------
 app.get('/cart',async(req,res)=>{
 	conn.query(`SELECT * FROM cart`,
@@ -136,9 +146,23 @@ app.get('/cart',async(req,res)=>{
 	})
 })
 app.post('/cart/add',async(req,res)=>{
-	const {m_no,p_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size}=req.body;
-	conn.query(`INSERT INTO cart (m_no,p_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size) VALUES(?,?,?,?,?,?,?,?,?)`
-	,[m_no,p_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size])
+	const {m_no,p_no,pa_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size}=req.body;
+	conn.query(`INSERT INTO cart (m_no,p_no,pa_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size) VALUES(?,?,?,?,?,?,?,?,?,?)`
+	,[m_no,p_no,pa_no,cp_name,c_saleprice,c_price,c_amount,cp_img,cp_color,cp_size])
+})
+app.delete('/cart/:select',async(req,res)=>{
+	const data = await JSON.parse(req.params.select)
+	for (let i = 0; i < data.length; i++) {
+		conn.query(`DELETE FROM cart WHERE c_no=${data[i]||0}`)		
+	}
+})
+// ------------- member -------------
+app.get('/member/:no',async(req,res)=>{
+	const {no}=req.params;
+	conn.query(`SELECT * FROM member WHERE m_no=${no}`,
+	(error,result,fields)=>{
+		res.send(result[0]);
+	})
 })
 
 // ------------- admin -------------
@@ -224,7 +248,7 @@ app.patch('/admin/product/amount/:no',async(req,res)=>{
 	const {pa_amount,plus_amount}=req.body
 	conn.query(`
 	UPDATE product_amount
-	SET pa_amount='${Number(pa_amount)+Number(plus_amount)}'
+	SET pa_amount= pa_amount+${Number(plus_amount)}'
 	WHERE pa_no='${no}'`)
 })
 app.delete('/admin/product/amount/:no',async(req,res)=>{
