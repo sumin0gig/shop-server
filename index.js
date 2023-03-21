@@ -38,10 +38,10 @@ conn.connect();
 
 // ------------- join -------------
 app.post('/join', async (req,res)=>{
-	const {name,id,pw,tel_1,tel_2,tel_3,birth,sms_check,mail_add1,mail_add2,mail_check}=req.body;
+	const {name,id,pw,tel_1,tel_2,tel_3,addr,addrplus,sms_check,mail_add1,mail_add2,mail_check}=req.body;
 	const password=bcrypt.hashSync(pw,12);
-	conn.query(`INSERT INTO member (m_name,m_id,m_pw,m_tel_1,m_tel_2,m_tel_3,m_birth,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check)
-	VALUES ('${name}','${id}','${password}','${tel_1}','${tel_2}','${tel_3}','${birth}','${sms_check}','${mail_add1}','${mail_add2}','${mail_check}')`)
+	conn.query(`INSERT INTO member (m_name,m_id,m_pw,m_tel_1,m_tel_2,m_tel_3,m_addr,m_addrplus,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check)
+	VALUES ('${name}','${id}','${password}','${tel_1}','${tel_2}','${tel_3}','${addr}','${addrplus}','${sms_check}','${mail_add1}','${mail_add2}','${mail_check}')`)
 })
 app.get('/join/id',async(req,res)=>{
 	conn.query(`SELECT m_id FROM member`,
@@ -212,6 +212,10 @@ app.delete('/admin/product/update/:id',async(req,res)=>{
 	const {id}= req.params
 	conn.query(`DELETE FROM product WHERE p_no='${id}'`)
 })
+app.delete('/admin/product/amount/:id',async(req,res)=>{
+	const {id}= req.params
+	conn.query(`DELETE FROM product_amount WHERE p_no='${id}'`)
+})
 
 app.get('/admin/product/some/:isSearch',async(req,res)=>{
 	const { params } = req;
@@ -258,7 +262,7 @@ app.delete('/admin/product/amount/:no',async(req,res)=>{
 	WHERE pa_no='${no}'`)
 })
 app.get('/admin/member',async(req,res)=>{
-	conn.query(`SELECT m_no,m_name,m_id,m_tel_1,m_tel_2,m_tel_3,m_birth,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check,m_authority FROM member order by m_authority desc`
+	conn.query(`SELECT m_no,m_name,m_id,m_tel_1,m_tel_2,m_tel_3,m_addr,m_addrplus,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check,m_authority FROM member order by m_authority desc`
 	,(error,result)=>{
 		res.send(result);
 	})
