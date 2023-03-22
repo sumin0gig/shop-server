@@ -156,6 +156,25 @@ app.delete('/cart/:select',async(req,res)=>{
 		conn.query(`DELETE FROM cart WHERE c_no=${data[i]||0}`)		
 	}
 })
+
+// ------------- heart -------------
+app.post('/heart/add',async(req,res)=>{
+	const {m_no,p_no,p_mainImg,p_name,p_price,p_saleprice}=req.body;
+	conn.query(`INSERT INTO heart (m_no,p_no,p_mainImg,p_name,p_price,p_saleprice) VALUES(?,?,?,?,?,?)`
+	,[m_no,p_no,p_mainImg,p_name,p_price,p_saleprice])
+})
+app.get('/heart/:no',async(req,res)=>{
+	const {no}=req.params;
+	conn.query(`SELECT * FROM heart WHERE m_no=${no}`,
+	(error,result,fields)=>{
+		res.send(result);
+	})
+})
+app.delete('/heart/:no',async(req,res)=>{
+	const {no}= req.params;
+	conn.query(`DELETE from heart WHERE h_no=${no} `)
+})
+
 // ------------- member -------------
 app.get('/member/:no',async(req,res)=>{
 	const {no}=req.params;
@@ -163,6 +182,14 @@ app.get('/member/:no',async(req,res)=>{
 	(error,result,fields)=>{
 		res.send(result[0]);
 	})
+})
+app.patch('/member/:no',async(req,res)=>{
+	const {no}=req.params;
+	const {m_name,m_tel_1,m_tel_2,m_tel_3,m_sms_check,m_mail_add1,m_mail_add2,m_mail_check}=req.body;
+	conn.query(`UPDATE member
+	SET m_name='${m_name}',m_tel_1='${m_tel_1}',m_tel_2='${m_tel_2}',m_tel_3='${m_tel_3}',m_sms_check='${m_sms_check}',m_mail_add1='${m_mail_add1}',m_mail_add2='${m_mail_add2}',m_mail_check='${m_mail_check}'
+	WHERE m_no=${no}
+	`)
 })
 
 // ------------- admin -------------
@@ -249,10 +276,10 @@ app.post('/admin/product/amount',async(req,res)=>{
 })
 app.patch('/admin/product/amount/:no',async(req,res)=>{
 	const {no}=req.params
-	const {pa_amount,plus_amount}=req.body
+	const {plus_amount}=req.body
 	conn.query(`
 	UPDATE product_amount
-	SET pa_amount= pa_amount+${Number(plus_amount)}'
+	SET pa_amount= pa_amount+${Number(plus_amount)}
 	WHERE pa_no='${no}'`)
 })
 app.delete('/admin/product/amount/:no',async(req,res)=>{
